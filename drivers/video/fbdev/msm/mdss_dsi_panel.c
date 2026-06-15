@@ -2095,6 +2095,11 @@ static void mdss_dsi_parse_esd_params(struct device_node *np,
 			ctrl->status_mode = ESD_REG;
 			ctrl->check_read_status =
 				mdss_dsi_gen_read_status;
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO) || \
+    IS_ENABLED(CONFIG_MACH_XIAOMI_VINCE)
+		} else if (!strcmp(string, "TE_check_NT35596")) {
+			ctrl->status_mode = ESD_TE_NT35596;
+#endif
 		} else if (!strcmp(string, "reg_read_nt35596")) {
 			ctrl->status_mode = ESD_REG_NT35596;
 			ctrl->status_error_count = 0;
