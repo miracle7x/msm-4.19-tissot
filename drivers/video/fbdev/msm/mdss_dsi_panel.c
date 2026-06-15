@@ -1809,6 +1809,7 @@ static int mdss_dsi_parse_reset_seq(struct device_node *np,
 	return 0;
 }
 
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_YSL)
 static char sleep_out[1] = {0x11};	/* DTYPE_DCS_WRITE1 */
 static struct dsi_cmd_desc sleep_out_cmd = {
 	{DTYPE_DCS_LWRITE, 1, 0, 0, 5, sizeof(sleep_out)},
@@ -1838,6 +1839,7 @@ static int mdss_dsi_truly_set_sleep_out(struct mdss_dsi_ctrl_pdata *ctrl)
 	//pr_debug("%s:end truly sleep out\n", __func__);
 	return 0;
 }
+#endif
 
 static bool mdss_dsi_cmp_panel_reg_v2(struct mdss_dsi_ctrl_pdata *ctrl)
 {
@@ -1845,8 +1847,10 @@ static bool mdss_dsi_cmp_panel_reg_v2(struct mdss_dsi_ctrl_pdata *ctrl)
 	int len = 0, *lenp;
 	int group = 0;
 
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_YSL)
 	if (!strncmp(ctrl->panel_data.panel_info.panel_name, "truly hx8394f", 13))
 		mdss_dsi_truly_set_sleep_out(ctrl);
+#endif
 
 	lenp = ctrl->status_valid_params ?: ctrl->status_cmds_rlen;
 
