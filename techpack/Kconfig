@@ -1,6 +1,6 @@
 menu "Tech packages"
 
 source "techpack/data/Kconfig"
-source "techpack/xiaomi-titanium/Kconfig"
+source "techpack/xiaomi-msm8953/Kconfig"
 
 endmenu
