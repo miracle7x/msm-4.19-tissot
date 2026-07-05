@@ -3714,6 +3714,26 @@ static struct platform_driver msm8952_asoc_machine_driver = {
 
 static int __init msm8952_machine_init(void)
 {
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_ROSY)
+	mbhc_cfg.key_code[1] = KEY_PREVIOUSSONG_NEW;
+	mbhc_cfg.key_code[2] = KEY_NEXTSONG_NEW;
+	mbhc_cfg.key_code[3] = KEY_VOICECOMMAND;
+#elif IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO)
+	mbhc_cfg.key_code[1] = BTN_1;
+	mbhc_cfg.key_code[2] = BTN_2;
+	mbhc_cfg.key_code[3] = 0;
+#elif IS_ENABLED(CONFIG_MACH_XIAOMI_YSL) || IS_ENABLED(CONFIG_MACH_XIAOMI_VINCE) || \
+      IS_ENABLED(CONFIG_MACH_XIAOMI_MARKW) || IS_ENABLED(CONFIG_MACH_XIAOMI_DAISY) || \
+      IS_ENABLED(CONFIG_MACH_XIAOMI_SAKURA)
+	mbhc_cfg.key_code[1] = KEY_MEDIA;
+	mbhc_cfg.key_code[2] = KEY_VOLUMEUP;
+	mbhc_cfg.key_code[3] = KEY_VOLUMEDOWN;
+#elif IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)
+	mbhc_cfg.detect_extn_cable = false;
+	mbhc_cfg.key_code[1] = KEY_VOLUMEUP;
+	mbhc_cfg.key_code[2] = KEY_VOLUMEDOWN;
+	mbhc_cfg.key_code[3] = 0;
+#endif
 	return platform_driver_register(&msm8952_asoc_machine_driver);
 }
 module_init(msm8952_machine_init);
