@@ -25,7 +25,6 @@
 #include "wcd-mbhc-legacy.h"
 #include "wcd-mbhc-adc.h"
 #include <asoc/wcd-mbhc-v2-api.h>
-
 void wcd_mbhc_jack_report(struct wcd_mbhc *mbhc,
 			  struct snd_soc_jack *jack, int status, int mask)
 {
@@ -1236,6 +1235,14 @@ static irqreturn_t wcd_mbhc_release_handler(int irq, void *data)
 	if (mbhc->mbhc_detection_logic == WCD_DETECTION_LEGACY &&
 		mbhc->current_plug == MBHC_PLUG_TYPE_HEADPHONE) {
 		wcd_mbhc_find_plug_and_report(mbhc, MBHC_PLUG_TYPE_HEADSET);
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO)
+		if (IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO)) {
+            wcd_mbhc_jack_report(mbhc, &mbhc->headset_jack,
+                        0, WCD_MBHC_JACK_MASK);
+            msleep(100);
+            wcd_mbhc_report_plug(mbhc, 1, SND_JACK_HEADSET);
+        }
+#endif
 		goto exit;
 
 	}

@@ -13,8 +13,6 @@
 #include "codecs/wsa881x-analog.h"
 #include <linux/regulator/consumer.h>
 #include <linux/regulator/driver.h>
-
-
 #define BTSCO_RATE_8KHZ 8000
 #define BTSCO_RATE_16KHZ 16000
 
@@ -33,6 +31,10 @@
 #define WCD_MBHC_DEF_RLOADS 5
 #define MAX_WSA_CODEC_NAME_LENGTH 80
 #define MSM_DT_MAX_PROP_SIZE 80
+
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO)
+#define EXT_PA_MODE  5
+#endif
 
 enum {
 	DIG_CDC,
