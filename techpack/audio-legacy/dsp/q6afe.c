@@ -22,6 +22,7 @@
 #include <ipc/apr_tal.h>
 #include "adsp_err.h"
 #include "q6afecal-hwdep.h"
+
 #define WAKELOCK_TIMEOUT	5000
 #define AFE_CLK_TOKEN	1024
 
@@ -837,7 +838,6 @@ static int32_t sp_make_afe_callback(uint32_t opcode, uint32_t *payload,
 	}
 
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)
-	if (IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)) {
         if (param_hdr.param_id == AFE_PARAM_ID_DSM_CFG  ||
             param_hdr.param_id == AFE_PARAM_ID_DSM_INFO ||
             param_hdr.param_id == AFE_PARAM_ID_CALIB) {
@@ -861,7 +861,6 @@ static int32_t sp_make_afe_callback(uint32_t opcode, uint32_t *payload,
                 atomic_set(&this_afe.state, -1);
             }
         }
-    }
 #endif
 
 	return 0;
@@ -2350,18 +2349,13 @@ static int afe_send_cps_config(int src_port)
 	return ret;
 }
 
-#if IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_MSM8953)
 int afe_dsm_setget_params(uint8_t *payload, int size, int dir, uint32_t dst_port, uint32_t mod_id, uint32_t param_id)
 {
 	struct afe_dsm_set_command *set = NULL;
 	struct afe_dsm_get_command *get = NULL;
 	uint32_t *config = NULL;
 	int index = 0, ret = -EINVAL;
-
-	if (!IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)) {
-        pr_debug("%s: skip dsm for non-Tiffany devices\n", __func__);
-        return 0;
-    }
 
 	if (!payload || size <= 0) {
 		pr_err("%s: Invalid params\n", __func__);
@@ -2461,9 +2455,6 @@ int afe_dsm_ramp_dn_cfg(uint8_t *payload, int delay_in_ms)
 {
 	uint32_t *params = (uint32_t *)payload;
 
-	if (!IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT))
-        return 0;
-
 	*(params)		= 0;
 	*(params + 1)	= 3;       /* three command will be sent */
 	*(params + 2)	= 0x03000063;     /* fade out time */
@@ -2498,9 +2489,6 @@ int afe_dsm_pre_calib(uint8_t *payload)
 {
 	uint32_t *params = (uint32_t *)payload;
 
-	if (!IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT))
-        return 0;
-
 	*(params)		= 0;
 	*(params + 1)	= 1;               /* count */
 	*(params + 2)	= 0x03000001;     /* enable flag */
@@ -2513,9 +2501,6 @@ int afe_dsm_pre_calib(uint8_t *payload)
 int afe_dsm_post_calib(uint8_t *payload)
 {
 	uint32_t *params = (uint32_t *)payload;
-
-	if (!IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT))
-        return 0;
 
 	*(params)		= 0;
 	*(params + 1)	= 1;               /* count */
@@ -2534,9 +2519,6 @@ int afe_dsm_get_average_calib(uint8_t *payload)
 	uint32_t *params = (uint32_t *)payload;
 	uint64_t sum_rdc[2] = {0, 0};
 	int i, rc = 0;
-
-	if (!IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT))
-        return 0;
 
 	for (i = 0; i < 4; i++) {
 		rc = afe_dsm_setget_params(payload, sizeof(uint32_t)*14, 1, DSM_TX_PORT_ID, AFE_MODULE_DSM_TX, AFE_PARAM_ID_CALIB);
