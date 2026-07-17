@@ -17,6 +17,7 @@
 #include <linux/err.h>
 #include <linux/string.h>
 #include <linux/display_state.h>
+
 #include "mdss_dsi.h"
 #include "mdss_dba_utils.h"
 #include "mdss_debug.h"
@@ -387,9 +388,6 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
     struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
     struct mdss_panel_info *pinfo = NULL;
     int i, rc = 0;
-    
-    
-    int is_tissot = (mach == XIAOMI_MSM8953_MACH_TISSOT);
 
     if (pdata == NULL) {
         pr_err("%s: Invalid input data\n", __func__);
@@ -511,8 +509,8 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
             gpio_free(ctrl_pdata->disp_en_gpio);
         }
 
-        if ((is_tissot) && 
-            (panel_suspend_reset_flag == 2 || panel_suspend_reset_flag == 3)) {
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)
+        if (panel_suspend_reset_flag == 2 || panel_suspend_reset_flag == 3) {
             gpio_set_value((ctrl_pdata->rst_gpio), 1);
             mdelay(10);
             gpio_set_value((ctrl_pdata->rst_gpio), 0);
@@ -524,6 +522,9 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
         } else {
             gpio_set_value((ctrl_pdata->rst_gpio), 0);
         }
+#else
+        gpio_set_value((ctrl_pdata->rst_gpio), 0);
+#endif
 
         gpio_free(ctrl_pdata->rst_gpio);
         if (gpio_is_valid(ctrl_pdata->lcd_mode_sel_gpio)) {
@@ -1863,15 +1864,14 @@ static int mdss_dsi_truly_set_sleep_out(struct mdss_dsi_ctrl_pdata *ctrl)
 
 static bool mdss_dsi_cmp_panel_reg_v2(struct mdss_dsi_ctrl_pdata *ctrl)
 {
+	bool mismatched;
 	int i, j = 0;
 	int len = 0, *lenp;
 	int group = 0;
 
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_YSL)
-	if (IS_ENABLED(CONFIG_MACH_XIAOMI_YSL)) {
-		if (!strncmp(ctrl->panel_data.panel_info.panel_name, "truly hx8394f", 13))
-			mdss_dsi_truly_set_sleep_out(ctrl);
-	}
+	if (!strncmp(ctrl->panel_data.panel_info.panel_name, "truly hx8394f", 13))
+		mdss_dsi_truly_set_sleep_out(ctrl);
 #endif
 
 	lenp = ctrl->status_valid_params ?: ctrl->status_cmds_rlen;
@@ -1880,18 +1880,20 @@ static bool mdss_dsi_cmp_panel_reg_v2(struct mdss_dsi_ctrl_pdata *ctrl)
 		len += lenp[i];
 
 	for (j = 0; j < ctrl->groups; ++j) {
+		mismatched = false;
 		for (i = 0; i < len; ++i) {
-			pr_debug("[%i] return:0x%x status:0x%x\n",
-				i, ctrl->return_buf[i],
-				(unsigned int)ctrl->status_value[group + i]);
 			MDSS_XLOG(ctrl->ndx, ctrl->return_buf[i],
 					ctrl->status_value[group + i]);
 			if (ctrl->return_buf[i] !=
-				ctrl->status_value[group + i])
-				break;
+				ctrl->status_value[group + i]) {
+				pr_err("%s: [%i][%i] return:0x%x status:0x%x\n",
+					__func__, j, i, ctrl->return_buf[i],
+					(unsigned int)ctrl->status_value[group + i]);
+				mismatched = true;
+			}
 		}
 
-		if (i == len)
+		if (i == len && !mismatched)
 			return true;
 		group += len;
 	}
@@ -1902,10 +1904,18 @@ static bool mdss_dsi_cmp_panel_reg_v2(struct mdss_dsi_ctrl_pdata *ctrl)
 static int mdss_dsi_gen_read_status(struct mdss_dsi_ctrl_pdata *ctrl_pdata)
 {
 	if (!mdss_dsi_cmp_panel_reg_v2(ctrl_pdata)) {
-		pr_err("%s: Read back value from panel is incorrect\n",
-							__func__);
-		return -EINVAL;
+		ctrl_pdata->status_error_count++;
+		pr_err("%s: Read value bad. Error_cnt = %i\n",
+				__func__, ctrl_pdata->status_error_count);
+		if (ctrl_pdata->status_error_count <
+				ctrl_pdata->max_status_error_count) {
+			return 1;
+		} else {
+			ctrl_pdata->status_error_count = 0;
+			return -EINVAL;
+		}
 	} else {
+		ctrl_pdata->status_error_count = 0;
 		return 1;
 	}
 }
@@ -2115,15 +2125,15 @@ static void mdss_dsi_parse_esd_params(struct device_node *np,
 			ctrl->status_mode = ESD_BTA;
 		} else if (!strcmp(string, "reg_read")) {
 			ctrl->status_mode = ESD_REG;
+			ctrl->status_error_count = 0;
 			ctrl->check_read_status =
 				mdss_dsi_gen_read_status;
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO) || \
-    IS_ENABLED(CONFIG_MACH_XIAOMI_VINCE)
+    IS_ENABLED(CONFIG_MACH_XIAOMI_VINCE)  || \
+	IS_ENABLED(CONFIG_MACH_XIAOMI_SAKURA)  || \
+	IS_ENABLED(CONFIG_MACH_XIAOMI_DAISY)
 		} else if (!strcmp(string, "TE_check_NT35596")) {
-			if (IS_ENABLED(CONFIG_MACH_XIAOMI_VINCE) ||
-                IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO)) {
-				ctrl->status_mode = ESD_TE_NT35596;
-			}
+			ctrl->status_mode = ESD_TE_NT35596;
 #endif
 		} else if (!strcmp(string, "reg_read_nt35596")) {
 			ctrl->status_mode = ESD_REG_NT35596;

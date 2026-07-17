@@ -388,14 +388,11 @@ int mdss_dsi_panel_power_off(struct mdss_panel_data *pdata)
         pr_debug("reset disable: pinctrl not enabled\n");
 
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO)
-    if (IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO)) {
-        if (panel_suspend_reset_flag == 2)
-            msleep(1);
-        else if (panel_suspend_reset_flag == 3)
-            msleep(4);
-    }
+    if (panel_suspend_reset_flag == 2)
+        msleep(1);
+    else if (panel_suspend_reset_flag == 3)
+        msleep(4);
 #endif
-
 
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)
     if ((panel_suspend_power_flag != 3) && acc_vreg) {
@@ -434,8 +431,6 @@ static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata)
 {
     int ret = 0;
     struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
-    
-    int is_tissot = (mach == XIAOMI_MSM8953_MACH_TISSOT);
 
     if (pdata == NULL) {
         pr_err("%s: Invalid input data\n", __func__);
@@ -3273,29 +3268,25 @@ static struct device_node *mdss_dsi_find_panel_of_node(
 		pr_info("%s: cmdline:%s panel_name:%s\n",
 			__func__, panel_cfg, panel_name);
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO)
-		if (IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO)) {
-			if (!strcmp(panel_name, "qcom,mdss_dsi_otm1911_fhd_video")) {
-				panel_suspend_reset_flag = 2;
-			} else if (!strcmp(panel_name, "qcom,mdss_dsi_ili9885_boe_fhd_video")) {
-				panel_suspend_reset_flag = 3;
-			}
+		if (!strcmp(panel_name, "qcom,mdss_dsi_otm1911_fhd_video")) {
+			panel_suspend_reset_flag = 2;
+		} else if (!strcmp(panel_name, "qcom,mdss_dsi_ili9885_boe_fhd_video")) {
+			panel_suspend_reset_flag = 3;
 		}
 #endif
 		if (!strcmp(panel_name, NONE_PANEL))
 			goto exit;
 
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)
-		if (IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)) {
-			if (!strcmp(panel_name, "qcom,mdss_dsi_td4310_fhd_video")) {
-				panel_suspend_reset_flag = 1;
-				panel_suspend_power_flag = 1;
-			} else if (!strcmp(panel_name, "qcom,mdss_dsi_otm1911_fhd_video")) {
-				panel_suspend_reset_flag = 2;
-				panel_suspend_power_flag = 2;
-			} else if (!strcmp(panel_name, "qcom,mdss_dsi_ft8716_fhd_video")) {
-				panel_suspend_reset_flag = 3;
-				panel_suspend_power_flag = 3;
-			}
+		if (!strcmp(panel_name, "qcom,mdss_dsi_td4310_fhd_video")) {
+			panel_suspend_reset_flag = 1;
+			panel_suspend_power_flag = 1;
+		} else if (!strcmp(panel_name, "qcom,mdss_dsi_otm1911_fhd_video")) {
+			panel_suspend_reset_flag = 2;
+			panel_suspend_power_flag = 2;
+		} else if (!strcmp(panel_name, "qcom,mdss_dsi_ft8716_fhd_video")) {
+			panel_suspend_reset_flag = 3;
+			panel_suspend_power_flag = 3;
 		}
 #endif
 
@@ -3698,8 +3689,7 @@ static int mdss_dsi_ctrl_probe(struct platform_device *pdev)
 	}
 
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)
-	if (IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT))
-        panel_data = &ctrl_pdata->panel_data;
+	panel_data = &ctrl_pdata->panel_data;
 #endif
 
 	rc = dsi_panel_device_register(pdev, dsi_pan_node, ctrl_pdata);
@@ -4565,7 +4555,9 @@ static int mdss_dsi_parse_ctrl_params(struct platform_device *ctrl_pdev,
 }
 
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO) || \
-    IS_ENABLED(CONFIG_MACH_XIAOMI_VINCE)
+    IS_ENABLED(CONFIG_MACH_XIAOMI_VINCE)  || \
+	IS_ENABLED(CONFIG_MACH_XIAOMI_SAKURA)  || \
+	IS_ENABLED(CONFIG_MACH_XIAOMI_DAISY)
 u32 te_count;
 static irqreturn_t te_interrupt(int irq, void *data)
 {
@@ -4790,10 +4782,10 @@ int dsi_panel_device_register(struct platform_device *ctrl_pdev,
 			ctrl_pdata->status_mode == ESD_REG_NT35596)
 		ctrl_pdata->check_status = mdss_dsi_reg_status_check;
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO) || \
-    IS_ENABLED(CONFIG_MACH_XIAOMI_VINCE)
-	else if ((IS_ENABLED(CONFIG_MACH_XIAOMI_VINCE) ||
-		  IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO)) && 
-		 ctrl_pdata->status_mode == ESD_TE_NT35596) {
+    IS_ENABLED(CONFIG_MACH_XIAOMI_VINCE)  || \
+	IS_ENABLED(CONFIG_MACH_XIAOMI_SAKURA)  || \
+	IS_ENABLED(CONFIG_MACH_XIAOMI_DAISY)
+	else if (ctrl_pdata->status_mode == ESD_TE_NT35596) {
 		ctrl_pdata->check_status = mdss_dsi_TE_NT35596_check;
 		init_te_irq(ctrl_pdata);
 	}
