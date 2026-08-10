@@ -25,6 +25,7 @@
 #include "wcd-mbhc-legacy.h"
 #include "wcd-mbhc-adc.h"
 #include <asoc/wcd-mbhc-v2-api.h>
+
 void wcd_mbhc_jack_report(struct wcd_mbhc *mbhc,
 			  struct snd_soc_jack *jack, int status, int mask)
 {
@@ -546,7 +547,7 @@ void wcd_mbhc_hs_elec_irq(struct wcd_mbhc *mbhc, int irq_type,
 }
 EXPORT_SYMBOL(wcd_mbhc_hs_elec_irq);
 
-#if IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_MSM8953)
 extern int ext_pa_gpio;
 extern int ext_pa_status;
 #endif
@@ -608,9 +609,8 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 		mbhc->current_plug = MBHC_PLUG_TYPE_NONE;
 		mbhc->force_linein = false;
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)
-		if (IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)) {
+		if (gpio_is_valid(ext_pa_gpio))
 			gpio_set_value(ext_pa_gpio, 0);
-		}
 #endif
 	} else {
 		/*
@@ -753,11 +753,9 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 				    WCD_MBHC_JACK_MASK);
 		wcd_mbhc_clr_and_turnon_hph_padac(mbhc);
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)
-		if (IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)) {
-			msleep(500);
-			if (ext_pa_status)
-				gpio_set_value(ext_pa_gpio, 1);
-		}
+		msleep(500);
+		if (ext_pa_status && gpio_is_valid(ext_pa_gpio))
+			gpio_set_value(ext_pa_gpio, 1);
 #endif
 	}
 	pr_debug("%s: leave hph_status %x\n", __func__, mbhc->hph_status);
@@ -1253,12 +1251,10 @@ static irqreturn_t wcd_mbhc_release_handler(int irq, void *data)
 		mbhc->current_plug == MBHC_PLUG_TYPE_HEADPHONE) {
 		wcd_mbhc_find_plug_and_report(mbhc, MBHC_PLUG_TYPE_HEADSET);
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO)
-		if (IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO)) {
-            wcd_mbhc_jack_report(mbhc, &mbhc->headset_jack,
-                        0, WCD_MBHC_JACK_MASK);
-            msleep(100);
-            wcd_mbhc_report_plug(mbhc, 1, SND_JACK_HEADSET);
-        }
+		wcd_mbhc_jack_report(mbhc, &mbhc->headset_jack,
+				0, WCD_MBHC_JACK_MASK);
+		msleep(100);
+		wcd_mbhc_report_plug(mbhc, 1, SND_JACK_HEADSET);
 #endif
 		goto exit;
 
