@@ -382,7 +382,7 @@ ret:
 	return rc;
 }
 
-#if IS_ENABLED(CONFIG_MACH_XIAOMI_TIFFANY)
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)
 extern int panel_suspend_reset_flag;
 #endif
 
@@ -393,7 +393,7 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
     int i, rc = 0;
     
     int mach = xiaomi_msm8953_mach_get();
-    int is_tiffany = (mach == XIAOMI_MSM8953_MACH_TIFFANY);
+    int is_tissot = (mach == XIAOMI_MSM8953_MACH_TISSOT);
 
     if (pdata == NULL) {
         pr_err("%s: Invalid input data\n", __func__);
@@ -515,7 +515,7 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
             gpio_free(ctrl_pdata->disp_en_gpio);
         }
 
-        if ((is_tiffany) && 
+        if ((is_tissot) && 
             (panel_suspend_reset_flag == 2 || panel_suspend_reset_flag == 3)) {
             gpio_set_value((ctrl_pdata->rst_gpio), 1);
             mdelay(10);
