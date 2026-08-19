@@ -17,6 +17,7 @@
 #include "msm_sensor_driver.h"
 #include "msm_sensor.h"
 #include "msm_sd.h"
+
 /* Logging macro */
 #undef CDBG
 #define CDBG(fmt, args...) pr_debug(fmt, ##args)
@@ -47,19 +48,19 @@ static int msm_sensor_wait_for_probe_done(struct msm_sensor_init_t *s_init)
         CDBG("msm_cam_get_module_init_status -2\n");
         return 0;
     }
-    if (IS_ENABLED(CONFIG_MACH_XIAOMI_ROSY)) {
-        wait_event(s_init->state_wait, (s_init->module_init_status == 1));
-        rc = 0;
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_ROSY)
+    wait_event(s_init->state_wait, (s_init->module_init_status == 1));
+    rc = 0;
+#else
+    rc = wait_event_timeout(s_init->state_wait,
+        (s_init->module_init_status == 1), msecs_to_jiffies(tm));
+    if (rc == 0) {
+        pr_err("%s:%d wait timeout\n", __func__, __LINE__);
+        rc = -1;
     } else {
-        rc = wait_event_timeout(s_init->state_wait,
-            (s_init->module_init_status == 1), msecs_to_jiffies(tm));
-        if (rc == 0) {
-            pr_err("%s:%d wait timeout\n", __func__, __LINE__);
-            rc = -1;
-        } else {
-            rc = 0;
-        }
+        rc = 0;
     }
+#endif
 
     return rc;
 }

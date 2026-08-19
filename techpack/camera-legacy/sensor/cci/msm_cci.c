@@ -23,6 +23,7 @@
 #include "msm_camera_io_util.h"
 #include "msm_camera_dt_util.h"
 #include "cam_hw_ops.h"
+
 #define V4L2_IDENT_CCI 50005
 #define CCI_I2C_QUEUE_0_SIZE 64
 #define CCI_I2C_Q0_SIZE_128W 128
@@ -1420,22 +1421,22 @@ static int32_t msm_cci_init(struct v4l2_subdev *sd,
 	}
 
 	/* Re-initialize the completion */
-    if (IS_ENABLED(CONFIG_MACH_XIAOMI_ROSY)) {
-        reinit_completion(&cci_dev->cci_master_info[MASTER_0].reset_complete);
-        for (i = 0; i < NUM_QUEUES; i++) {
-            reinit_completion(&cci_dev->cci_master_info[MASTER_0].report_q[i]);
-        }
-        
-        reinit_completion(&cci_dev->cci_master_info[MASTER_1].reset_complete);
-        for (i = 0; i < NUM_QUEUES; i++) {
-            reinit_completion(&cci_dev->cci_master_info[MASTER_1].report_q[i]);
-        }
-    } else {
-        reinit_completion(&cci_dev->cci_master_info[master].reset_complete);
-        for (i = 0; i < NUM_QUEUES; i++) {
-            reinit_completion(&cci_dev->cci_master_info[master].report_q[i]);
-        }
-    }
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_ROSY)
+	reinit_completion(&cci_dev->cci_master_info[MASTER_0].reset_complete);
+	for (i = 0; i < NUM_QUEUES; i++) {
+		reinit_completion(&cci_dev->cci_master_info[MASTER_0].report_q[i]);
+	}
+
+	reinit_completion(&cci_dev->cci_master_info[MASTER_1].reset_complete);
+	for (i = 0; i < NUM_QUEUES; i++) {
+		reinit_completion(&cci_dev->cci_master_info[MASTER_1].report_q[i]);
+	}
+#else
+	reinit_completion(&cci_dev->cci_master_info[master].reset_complete);
+	for (i = 0; i < NUM_QUEUES; i++) {
+		reinit_completion(&cci_dev->cci_master_info[master].report_q[i]);
+	}
+#endif
 
     rc = legacy_msm_camera_enable_irq(cci_dev->irq, true);
 	if (rc < 0)

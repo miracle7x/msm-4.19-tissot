@@ -17,13 +17,13 @@
 #include "msm_sd.h"
 #include "msm_cci.h"
 #include "msm_eeprom.h"
-#if IS_ENABLED(CONFIG_MACH_XIAOMI_ROSY)
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_MSM8953)
 #include "msm_eeprom_otp_interface.h"
 #endif
 
 #undef CDBG
 #define CDBG(fmt, args...) pr_debug(fmt, ##args)
-#if IS_ENABLED(CONFIG_MACH_XIAOMI_ROSY)
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_MSM8953)
 char fusionid_back_d1[64] = { 0 };
 char fusionid_front_d1[64] = { 0 };
 extern char fusionid_front[];
@@ -673,14 +673,12 @@ static int msm_eeprom_config(struct msm_eeprom_ctrl_t *e_ctrl,
         rc = msm_eeprom_get_cmm_data(e_ctrl, cdata);
         break;
     case CFG_EEPROM_INIT:
-#if IS_ENABLED(CONFIG_MACH_XIAOMI_ROSY)
-        if (!IS_ENABLED(CONFIG_MACH_XIAOMI_ROSY)) {
-            if (e_ctrl->userspace_probe == 0) {
-                pr_err("%s:%d Eeprom already probed at kernel boot",
-                    __func__, __LINE__);
-                rc = 0;
-                break;
-            }
+#if !IS_ENABLED(CONFIG_MACH_XIAOMI_ROSY)
+        if (e_ctrl->userspace_probe == 0) {
+            pr_err("%s:%d Eeprom already probed at kernel boot",
+                __func__, __LINE__);
+            rc = 0;
+            break;
         }
 #endif
         if (e_ctrl->cal_data.num_data == 0) {
@@ -1597,7 +1595,7 @@ static long msm_eeprom_subdev_fops_ioctl32(struct file *file, unsigned int cmd,
 
 #endif
 
-#if IS_ENABLED(CONFIG_MACH_XIAOMI_ROSY)
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_MSM8953)
 static uint16_t fusion_read_id_D1_back(uint8_t *data){
 	uint16_t i;
 	uint8_t *fusion_id = data;
@@ -1765,47 +1763,47 @@ static int msm_eeprom_platform_probe(struct platform_device *pdev)
             goto memdata_free;
         }
 
-        if (IS_ENABLED(CONFIG_MACH_XIAOMI_ROSY)) {
-            if (!strcmp(eb_info->eeprom_name, "ovt_ov5675_i")){
-                printk("insensor eeprom todo init the otp register!\n");
-                eeprom_init_ov5675_reg_otp(e_ctrl, 0x20);
-            } else if (!strcmp(eb_info->eeprom_name, "ovt_ov5675_ii")){
-                printk("insensor eeprom todo init the otp register!\n");
-                eeprom_init_ov5675_reg_otp(e_ctrl, 0x6c);
-            } else {
-                printk("the eeprom is not insensor!\n");
-            }
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_ROSY)
+        if (!strcmp(eb_info->eeprom_name, "ovt_ov5675_i")){
+            printk("insensor eeprom todo init the otp register!\n");
+            eeprom_init_ov5675_reg_otp(e_ctrl, 0x20);
+        } else if (!strcmp(eb_info->eeprom_name, "ovt_ov5675_ii")){
+            printk("insensor eeprom todo init the otp register!\n");
+            eeprom_init_ov5675_reg_otp(e_ctrl, 0x6c);
+        } else {
+            printk("the eeprom is not insensor!\n");
+        }
 
-            if (!strcmp(eb_info->eeprom_name, "ovt_ov12a10_i")) {
-                module_id = sensor_eeprom_match_crc_id(e_ctrl, 0x00);
-                pr_err("eeprom %s read module id %d", eb_info->eeprom_name, module_id);
-                if (7 != module_id){
-                    pr_err("%s match id for ovt_ov12a10_i failed\n", __func__);
-                    goto power_down;
-                }
-            } else if (!strcmp(eb_info->eeprom_name, "sony_imx486_ii")) {
-                module_id = sensor_eeprom_match_crc_id(e_ctrl, 0x00);
-                pr_err("eeprom %s read module id %d\n", eb_info->eeprom_name, module_id);
-                if (1 != module_id){
-                    pr_err("%s match id for sony_imx486_ii failed\n", __func__);
-                    goto power_down;
-                }
-            } else if (!strcmp(eb_info->eeprom_name, "ovt_ov5675_i")) {
-                module_id = sensor_eeprom_match_crc_id(e_ctrl, 0x7010);
-                pr_err("eeprom %s read module id %d\n", eb_info->eeprom_name, module_id);
-                if (6 != module_id){
-                    pr_err("%s match id for ovt_ov5675_i failed\n", __func__);
-                    goto power_down;
-                }
-            } else if (!strcmp(eb_info->eeprom_name, "ovt_ov5675_ii")) {
-                module_id = sensor_eeprom_match_crc_id(e_ctrl, 0x7010);
-                pr_err("eeprom %s read module id %d\n", eb_info->eeprom_name, module_id);
-                if (7 != module_id){
-                    pr_err("%s match id for ovt_ov5675_ii failed\n", __func__);
-                    goto power_down;
-                }
+        if (!strcmp(eb_info->eeprom_name, "ovt_ov12a10_i")) {
+            module_id = sensor_eeprom_match_crc_id(e_ctrl, 0x00);
+            pr_err("eeprom %s read module id %d", eb_info->eeprom_name, module_id);
+            if (7 != module_id){
+                pr_err("%s match id for ovt_ov12a10_i failed\n", __func__);
+                goto power_down;
+            }
+        } else if (!strcmp(eb_info->eeprom_name, "sony_imx486_ii")) {
+            module_id = sensor_eeprom_match_crc_id(e_ctrl, 0x00);
+            pr_err("eeprom %s read module id %d\n", eb_info->eeprom_name, module_id);
+            if (1 != module_id){
+                pr_err("%s match id for sony_imx486_ii failed\n", __func__);
+                goto power_down;
+            }
+        } else if (!strcmp(eb_info->eeprom_name, "ovt_ov5675_i")) {
+            module_id = sensor_eeprom_match_crc_id(e_ctrl, 0x7010);
+            pr_err("eeprom %s read module id %d\n", eb_info->eeprom_name, module_id);
+            if (6 != module_id){
+                pr_err("%s match id for ovt_ov5675_i failed\n", __func__);
+                goto power_down;
+            }
+        } else if (!strcmp(eb_info->eeprom_name, "ovt_ov5675_ii")) {
+            module_id = sensor_eeprom_match_crc_id(e_ctrl, 0x7010);
+            pr_err("eeprom %s read module id %d\n", eb_info->eeprom_name, module_id);
+            if (7 != module_id){
+                pr_err("%s match id for ovt_ov5675_ii failed\n", __func__);
+                goto power_down;
             }
         }
+#endif
 
         rc = read_eeprom_memory(e_ctrl, &e_ctrl->cal_data);
         if (rc < 0) {
@@ -1817,8 +1815,8 @@ static int msm_eeprom_platform_probe(struct platform_device *pdev)
             CDBG("memory_data[%d] = 0x%X\n", j,
                 e_ctrl->cal_data.mapdata[j]);
 
-        if (IS_ENABLED(CONFIG_MACH_XIAOMI_ROSY)) {
-            if (!strcmp(eb_info->eeprom_name, "ovt_ov12a10_i")) {
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_ROSY)
+        if (!strcmp(eb_info->eeprom_name, "ovt_ov12a10_i")) {
                 CDBG("match id for ovt_ov12a10_i\n");
                 if (e_ctrl->cal_data.mapdata[0] == 0x01){
                     module_id = e_ctrl->cal_data.mapdata[1] & 0x1f;
@@ -1895,7 +1893,7 @@ static int msm_eeprom_platform_probe(struct platform_device *pdev)
                 goto power_down;
             }
             CDBG("%s eeprom module id: main_module_id=%d  sub_module_id=%d\n", __func__, main_module_id, sub_module_id);
-        }
+#endif
 
         e_ctrl->is_supported |= msm_eeprom_match_crc(&e_ctrl->cal_data);
 
