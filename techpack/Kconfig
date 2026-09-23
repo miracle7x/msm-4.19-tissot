@@ -1,7 +1,2 @@
-menu "Tech packages"
-
-source "techpack/data/Kconfig"
 source "techpack/camera-legacy/Kconfig"
 source "techpack/camera-legacy-n/Kconfig"
-
-endmenu
