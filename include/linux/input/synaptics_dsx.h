@@ -96,6 +96,7 @@ struct synaptics_dsx_board_data {
 	unsigned long irq_flags;
 	unsigned short i2c_addr;
 	unsigned short ub_i2c_addr;
+	unsigned short alt_i2c_addr;
 	unsigned short device_descriptor_addr;
 	unsigned int panel_x;
 	unsigned int panel_y;
