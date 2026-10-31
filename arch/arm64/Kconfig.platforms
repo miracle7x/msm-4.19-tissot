@@ -279,6 +279,57 @@ config ARCH_SDM450
 	  This enables support for the sdm450 chipset. If you do not
 	  wish to build a kernel that runs on this chipset, say 'N' here.
 
+menuconfig MACH_XIAOMI_MSM8953
+	bool "Xiaomi MSM8953 Family"
+	depends on ARCH_MSM8953 || ARCH_SDM450
+	default y
+	help
+	  Say Y here to enable support for Xiaomi MSM8953 devices.
+
+if MACH_XIAOMI_MSM8953
+
+config MACH_XIAOMI_TISSOT
+	bool "Xiaomi Mi A1 (tissot)"
+	help
+	  Support for Xiaomi Mi A1 (tissot).
+
+config MACH_XIAOMI_MIDO
+	bool "Xiaomi Redmi Note 4X (mido)"
+	help
+	  Support for Xiaomi Redmi Note 4X (mido).
+
+config MACH_XIAOMI_VINCE
+	bool "Xiaomi Redmi 5 Plus / Note 5 (vince)"
+	help
+	  Support for Xiaomi Redmi 5 Plus / Note 5 (vince).
+
+config MACH_XIAOMI_ROSY
+	bool "Xiaomi Redmi 5 (rosy)"
+	help
+	  Support for Xiaomi Redmi 5 (rosy).
+
+config MACH_XIAOMI_SAKURA
+	bool "Xiaomi Redmi 6 Pro (sakura)"
+	help
+	  Support for Xiaomi Redmi 6 Pro (sakura).
+
+config MACH_XIAOMI_DAISY
+	bool "Xiaomi Mi A2 Lite (daisy)"
+	help
+	  Support for Xiaomi Mi A2 Lite (daisy).
+
+config MACH_XIAOMI_YSL
+	bool "Xiaomi Redmi S2 / Y2 (ysl)"
+	help
+	  Support for Xiaomi Redmi S2 / Y2 (ysl).
+
+config MACH_XIAOMI_MARKW
+	bool "Xiaomi Redmi 4 Prime (markw)"
+	help
+	  Support for Xiaomi Redmi 4 Prime (markw).
+
+endif
+
 config ARCH_ROCKCHIP
 	bool "Rockchip Platforms"
 	select ARCH_HAS_RESET_CONTROLLER
