@@ -1839,10 +1839,15 @@ static int a5xx_microcode_load(struct adreno_device *adreno_dev)
 	if (a5xx_core->zap_name && !adreno_dev->zap_loaded) {
 		ptr = subsystem_get(a5xx_core->zap_name);
 
-		/* Return error if the zap shader cannot be loaded */
-		if (IS_ERR_OR_NULL(ptr))
-			return (ptr == NULL) ? -ENODEV : PTR_ERR(ptr);
-		adreno_dev->zap_loaded = 1;
+		/* Fallback to unsecured mode if the zap shader cannot be loaded */
+		if (IS_ERR_OR_NULL(ptr)) {
+			dev_warn(device->dev,
+				"zap shader cannot be loaded (%ld), falling back to unsecure mode\n",
+				PTR_ERR(ptr));
+			device->mmu.secured = false;
+		} else {
+			adreno_dev->zap_loaded = 1;
+		}
 	}
 
 	return 0;
