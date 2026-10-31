@@ -43,9 +43,6 @@
 #include <linux/ktime.h>
 #include <linux/extcon-provider.h>
 #include <linux/pmic-voter.h>
-#if IS_ENABLED(CONFIG_MACH_XIAOMI_MSM8953)
-#include <xiaomi-msm8953/mach.h>
-#endif
 #include <linux/iio/consumer.h>
 
 /* Mask/Bit helpers */
@@ -2682,18 +2679,17 @@ static int smbchg_system_temp_level_set(struct smbchg_chip *chip,
             pr_err("Couldn't disable DC thermal ICL vote rc=%d\n",
                 rc);
     } else {
-        int mach = xiaomi_msm8953_mach_get();
-        int is_tissot_or_vince = (mach == XIAOMI_MSM8953_MACH_TISSOT || 
-                                   mach == XIAOMI_MSM8953_MACH_VINCE);
-
-        if (is_tissot_or_vince && 
-            (chip->usb_supply_type == POWER_SUPPLY_TYPE_USB_HVDCP || 
-             chip->usb_supply_type == POWER_SUPPLY_TYPE_USB_HVDCP_3)) {
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT) || IS_ENABLED(CONFIG_MACH_XIAOMI_VINCE)
+        if (chip->usb_supply_type == POWER_SUPPLY_TYPE_USB_HVDCP || 
+            chip->usb_supply_type == POWER_SUPPLY_TYPE_USB_HVDCP_3) {
             
             thermal_icl_ma = (int)hvdcp_thermal_mitigation[chip->therm_lvl_sel];
         } else {
             thermal_icl_ma = (int)chip->thermal_mitigation[chip->therm_lvl_sel];
         }
+#else
+        thermal_icl_ma = (int)chip->thermal_mitigation[chip->therm_lvl_sel];
+#endif
 
         rc = vote(chip->usb_icl_votable, THERMAL_ICL_VOTER, true,
                     thermal_icl_ma);
@@ -4467,11 +4463,9 @@ static void handle_usb_removal(struct smbchg_chip *chip)
 	union power_supply_propval pval = {0, };
 	int rc;
 
-#if IS_ENABLED(CONFIG_MACH_XIAOMI_MSM8953)
-	if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_MIDO) {
-		if (set_usb_charge_mode_par == 1)
-			ist30xx_set_ta_mode(0);
-	}
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO)
+	if (set_usb_charge_mode_par == 1)
+		ist30xx_set_ta_mode(0);
 #endif
 
 	pr_smb(PR_STATUS, "triggered\n");
@@ -4544,10 +4538,8 @@ static void handle_usb_insertion(struct smbchg_chip *chip)
 	char *usb_type_name = "null";
 
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO)
-	if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_MIDO) {
-		if (set_usb_charge_mode_par == 1)
-			ist30xx_set_ta_mode(1);
-	}
+	if (set_usb_charge_mode_par == 1)
+		ist30xx_set_ta_mode(1);
 #endif
 
 	pr_smb(PR_STATUS, "triggered\n");
@@ -4555,11 +4547,9 @@ static void handle_usb_insertion(struct smbchg_chip *chip)
 	read_usb_type(chip, &usb_type_name, &usb_supply_type);
 
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO)
-	if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_MIDO) {
-		if (usb_supply_type == POWER_SUPPLY_TYPE_USB_CDP || usb_supply_type == POWER_SUPPLY_TYPE_USB) {
-			rc = rerun_apsd(chip);
-			read_usb_type(chip, &usb_type_name, &usb_supply_type);
-		}
+	if (usb_supply_type == POWER_SUPPLY_TYPE_USB_CDP || usb_supply_type == POWER_SUPPLY_TYPE_USB) {
+		rc = rerun_apsd(chip);
+		read_usb_type(chip, &usb_type_name, &usb_supply_type);
 	}
 #endif
 
@@ -6047,11 +6037,11 @@ static irqreturn_t batt_hot_handler(int irq, void *_chip)
 	struct smbchg_chip *chip = _chip;
 	u8 reg = 0;
 
-	if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_MIDO ||
-	    xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_DAISY ||
-		xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_SAKURA ||
-	    xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_VINCE) {
-		
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO) || \
+    IS_ENABLED(CONFIG_MACH_XIAOMI_DAISY) || \
+    IS_ENABLED(CONFIG_MACH_XIAOMI_SAKURA) || \
+    IS_ENABLED(CONFIG_MACH_XIAOMI_VINCE)
+	{
 		int rc;
 		/* set the warm float voltage compensation, set the warm float voltage to 4.1V */
 		if (chip->float_voltage_comp != -EINVAL) {
@@ -6062,6 +6052,7 @@ static irqreturn_t batt_hot_handler(int irq, void *_chip)
 			pr_smb(PR_STATUS, "set float voltage comp to %d\n", chip->float_voltage_comp);
 		}
 	}
+#endif
 
 	smbchg_read(chip, &reg, chip->bat_if_base + RT_STS, 1);
 	chip->batt_hot = !!(reg & HOT_BAT_HARD_BIT);
@@ -6080,11 +6071,11 @@ static irqreturn_t batt_cold_handler(int irq, void *_chip)
 	struct smbchg_chip *chip = _chip;
 	u8 reg = 0;
 
-	if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_MIDO ||
-	    xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_DAISY ||
-		xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_SAKURA ||
-	    xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_VINCE) {
-		
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO) || \
+    IS_ENABLED(CONFIG_MACH_XIAOMI_DAISY) || \
+    IS_ENABLED(CONFIG_MACH_XIAOMI_SAKURA) || \
+    IS_ENABLED(CONFIG_MACH_XIAOMI_VINCE)
+	{
 		int rc;
 		/* set the cool float voltage compensation, set the cool float voltage to 4.4V */
 		rc = smbchg_float_voltage_comp_set(chip, 0);
@@ -6092,6 +6083,7 @@ static irqreturn_t batt_cold_handler(int irq, void *_chip)
 			dev_err(chip->dev, "Couldn't set float voltage comp rc = %d\n", rc);
 		}
 	}
+#endif
 
 	smbchg_read(chip, &reg, chip->bat_if_base + RT_STS, 1);
 	chip->batt_cold = !!(reg & COLD_BAT_HARD_BIT);
@@ -7170,7 +7162,8 @@ static int smbchg_hw_init(struct smbchg_chip *chip)
 				rc);
 	}
 
-	if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_MIDO) {
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO)
+	{
 		u8 reg = 0;
 
 		rc = smbchg_sec_masked_write(chip, chip->otg_base + OTG_CFG, 0x0c, 0x8);
@@ -7186,6 +7179,7 @@ static int smbchg_hw_init(struct smbchg_chip *chip)
 				rc);
 		}
 	}
+#endif
 
 	if (chip->otg_pinctrl) {
 		/* configure OTG enable to pin control active low */
@@ -7930,12 +7924,11 @@ static int smbchg_probe(struct platform_device *pdev)
 	struct power_supply_config batt_psy_cfg = {};
 	struct power_supply_config dc_psy_cfg = {};
 
-	if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_VINCE ||
-	    xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_TISSOT) {
-		smbchg_default_hvdcp_icl_ma = 2500;
-	} else {
-		smbchg_default_hvdcp_icl_ma = 1800;
-	}
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_VINCE) || IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)
+	smbchg_default_hvdcp_icl_ma = 2500;
+#else
+	smbchg_default_hvdcp_icl_ma = 1800;
+#endif
 
 	if (of_property_read_bool(pdev->dev.of_node, "qcom,external-typec")) {
 		/* read the type power supply name */
@@ -8073,11 +8066,9 @@ static int smbchg_probe(struct platform_device *pdev)
 	chip->fake_battery_soc = -EINVAL;
 	chip->usb_online = -EINVAL;
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_YSL)
-	if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_YSL) {
-		chip->batt_cool_xiaomi = false;
-		chip->batt_warm = false;
-		chip->batt_cool = false;
-	}
+	chip->batt_cool_xiaomi = false;
+	chip->batt_warm = false;
+	chip->batt_cool = false;
 #endif
 	dev_set_drvdata(&pdev->dev, chip);
 
