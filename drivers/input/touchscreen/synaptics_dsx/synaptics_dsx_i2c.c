@@ -187,6 +187,22 @@ static int parse_dt(struct device *dev, struct synaptics_dsx_board_data *bdata)
 		bdata->ub_i2c_addr = -1;
 	}
 
+	/* for allow more i2c address */
+	prop = of_find_property(np, "synaptics,alt-addr", NULL);
+	if (prop && prop->length) {
+		retval = of_property_read_u32(np, "synaptics,alt-addr", &value);
+		if (retval < 0) {
+			dev_err(dev, "%s: Unable to read synaptics,alt-addr property\n",
+					__func__);
+			return retval;
+		}
+		bdata->alt_i2c_addr = (unsigned short)value;
+		dev_info(dev, "%s: alternate I2C address found: 0x%02x\n",
+				__func__, bdata->alt_i2c_addr);
+	} else {
+		bdata->alt_i2c_addr = 0;
+	}
+
 	prop = of_find_property(np, "synaptics,cap-button-codes", NULL);
 	if (prop && prop->length) {
 		bdata->cap_button_map->map = devm_kzalloc(dev,
@@ -662,6 +678,39 @@ static int synaptics_rmi4_i2c_probe(struct i2c_client *client,
 
 	hw_if.bus_access = &bus_access;
 	hw_if.board_data->i2c_addr = client->addr;
+
+	if (hw_if.board_data->alt_i2c_addr) {
+		int ret;
+		u8 test_reg = 0x00;
+
+		/* check default i2c address */
+		ret = i2c_smbus_read_byte_data(client, test_reg);
+		if (ret < 0) {
+			dev_warn(&client->dev,
+					"Primary addr 0x%02x no response, trying alt 0x%02x\n",
+					hw_if.board_data->i2c_addr,
+					hw_if.board_data->alt_i2c_addr);
+
+			/* check alter i2c address */
+			client->addr = hw_if.board_data->alt_i2c_addr;
+			ret = i2c_smbus_read_byte_data(client, test_reg);
+			if (ret >= 0) {
+				dev_info(&client->dev,
+						"Using alternate I2C address 0x%02x\n",
+						hw_if.board_data->alt_i2c_addr);
+				hw_if.board_data->i2c_addr = hw_if.board_data->alt_i2c_addr;
+			} else {
+				dev_err(&client->dev,
+						"No response on alt addr 0x%02x either\n",
+						hw_if.board_data->alt_i2c_addr);
+				return -ENODEV;
+			}
+		} else {
+			dev_info(&client->dev,
+					"Touch IC detected at primary I2C addr 0x%02x\n",
+					hw_if.board_data->i2c_addr);
+		}
+	}
 
 	synaptics_dsx_i2c_device->name = PLATFORM_DRIVER_NAME;
 	synaptics_dsx_i2c_device->id = 0;

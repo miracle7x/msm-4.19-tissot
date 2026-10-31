@@ -33,7 +33,7 @@
 * 1.Included header files
 *****************************************************************************/
 #include "focaltech_core.h"
-#include <xiaomi-msm8953/touchscreen.h>
+#include <linux/input/touchscreen_xiaomi.h>
 
 /******************************************************************************
 * Private constant and macro definitions using #define

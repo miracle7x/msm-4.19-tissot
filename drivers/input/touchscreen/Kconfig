@@ -1336,7 +1336,7 @@ config TOUCHSCREEN_SYNAPTICS_DSX
 	  To compile this driver as a module, choose M here: the
 	  module will be called synaptics_dsx.
 
-#source "drivers/input/touchscreen/synaptics_dsx/Kconfig"
+source "drivers/input/touchscreen/synaptics_dsx/Kconfig"
 
 config TOUCHSCREEN_SYNAPTICS_TCM
 	bool "Synaptics TCM Touchscreen Driver"
@@ -1363,5 +1363,32 @@ config TOUCHSCREEN_SWEEP2WAKE
 config TOUCHSCREEN_DOUBLETAP2WAKE
 	bool "DoubleTap2Wake for touchscreens"
 	default n
+
+source "drivers/input/touchscreen/focaltech_touch_mi8953/Kconfig"
+source "drivers/input/touchscreen/nt36xxx_mi8953/Kconfig"
+source "drivers/input/touchscreen/gt9xx/Kconfig"
+
+config TOUCHSCREEN_TD4310_E7
+	tristate "synaptics touchscreens (td4310_e7)"
+	depends on I2C
+	help
+	  Say Y here if you have a td4310 touchscreen.
+
+config TOUCHSCREEN_TD4310_LANSI_E7
+	tristate "synaptics touchscreens (td4310_lansi_e7)"
+	depends on I2C
+	help
+	  Say Y here if you have a td4310 lansi touchscreen.
+
+config TOUCHSCREEN_IST3038C
+	tristate "imagis touchscreens (ist3038c)"
+	depends on I2C
+	help
+	  Say Y here if you have a ist3038c touchscreen.
+
+config TOUCHSCREEN_SYSCTL_MI8953
+	bool "Sysctl control interface for Xiaomi MSM8953 touchscreens"
+	help
+	  Say Y here to enable sysctl control interface for Xiaomi MSM8953 touchscreens
 
 endif
