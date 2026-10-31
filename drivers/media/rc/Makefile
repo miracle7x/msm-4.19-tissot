@@ -48,3 +48,5 @@ obj-$(CONFIG_IR_SIR) += sir_ir.o
 obj-$(CONFIG_IR_MTK) += mtk-cir.o
 obj-$(CONFIG_IR_ZX) += zx-irdec.o
 obj-$(CONFIG_IR_TANGO) += tango-ir.o
+obj-$(CONFIG_SPI_PEELIR) += peelir.o
+obj-$(CONFIG_IR_PWM_MI8953) += pwm-ir.o

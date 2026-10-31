@@ -27,7 +27,7 @@
 #include <linux/gpio.h>
 #include <linux/miscdevice.h>
 #include <linux/spi/spi.h>
-#include <xiaomi-msm8953/peelir.h>
+#include "peelir.h"
 
 #include <linux/uaccess.h>
 #include <asm/delay.h>
