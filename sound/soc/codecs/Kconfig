@@ -662,6 +662,27 @@ config SND_SOC_MAX98927
 	tristate "Maxim Integrated MAX98927 Speaker Amplifier"
 	depends on I2C
 
+config SND_SOC_TAS2557
+	tristate "Texas Instruments TAS2557 Speaker Amplifier"
+	depends on I2C
+	help
+	  Support for Texas Instruments TAS2557 Smart Amplifier.
+
+config TAS2557_REGMAP
+	bool "Texas Instruments TAS2557 Regmap"
+	depends on SND_SOC_TAS2557
+	default y
+
+config TAS2557_CODEC
+	bool "Texas Instruments TAS2557 Codec"
+	depends on SND_SOC_TAS2557
+	default y
+
+config TAS2557_MISC
+	bool "Texas Instruments TAS2557 Misc"
+	depends on SND_SOC_TAS2557
+	default y
+
 config SND_SOC_MAX98373
 	tristate "Maxim Integrated MAX98373 Speaker Amplifier"
 	depends on I2C
