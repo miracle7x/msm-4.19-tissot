@@ -25,11 +25,8 @@
 #include <linux/irq.h>
 #include <linux/err.h>
 #include <linux/delay.h>
-#include <xiaomi-msm8953/leds-qpnp-wled.h>
+#include "leds-qpnp-wled.h"
 #include <linux/qpnp/qpnp-revid.h>
-#if IS_ENABLED(CONFIG_MACH_XIAOMI_MSM8953)
-#include <xiaomi-msm8953/mach.h>
-#endif
 
 /* base addresses */
 #define QPNP_WLED_CTRL_BASE		"qpnp-wled-ctrl-base"
