@@ -18,9 +18,6 @@
 #include "msm_flash.h"
 #include "msm_camera_dt_util.h"
 #include "msm_cci.h"
-#if IS_ENABLED(CONFIG_MACH_XIAOMI_MSM8953)
-#include <xiaomi-msm8953/mach.h>
-#endif
 
 #undef CDBG
 #define CDBG(fmt, args...) pr_debug(fmt, ##args)
@@ -189,7 +186,7 @@ static int32_t msm_torch_create_classdev(struct platform_device *pdev,
     int32_t i = 0;
     struct msm_flash_ctrl_t *fctrl =
         (struct msm_flash_ctrl_t *)data;
-    int is_ysl = (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_YSL);
+    int is_ysl = IS_ENABLED(CONFIG_MACH_XIAOMI_YSL);
 
     if (!fctrl) {
         pr_err("Invalid fctrl\n");
@@ -618,9 +615,7 @@ static int32_t msm_flash_init(
 		}
 	}
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_YSL)
-	if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_YSL) {
-		flash_ctrl->func_tbl->camera_flash_off(flash_ctrl, NULL);
-	}
+	flash_ctrl->func_tbl->camera_flash_off(flash_ctrl, NULL);
 #endif
 
 	flash_ctrl->flash_state = MSM_CAMERA_FLASH_INIT;
@@ -782,7 +777,7 @@ static int32_t msm_flash_config(struct msm_flash_ctrl_t *flash_ctrl,
 	int32_t rc = 0;
 	struct msm_flash_cfg_data_t *flash_data =
         (struct msm_flash_cfg_data_t *) argp;
-    int is_vince = (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_VINCE);
+    int is_vince = IS_ENABLED(CONFIG_MACH_XIAOMI_VINCE);
 
     mutex_lock(flash_ctrl->flash_mutex);
 
@@ -1383,9 +1378,7 @@ static int32_t msm_flash_platform_probe(struct platform_device *pdev)
 	if (flash_ctrl->flash_driver_type == FLASH_DRIVER_PMIC)
 		rc = msm_torch_create_classdev(pdev, flash_ctrl);
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_VINCE)
-	if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_VINCE) {
-        msm_flashlight_create_classdev(pdev, flash_ctrl);
-    }
+	msm_flashlight_create_classdev(pdev, flash_ctrl);
 #endif
 
 	CDBG("probe success\n");
@@ -1425,10 +1418,8 @@ static int __init msm_flash_init_module(void)
 		return -ENODEV;
 	CDBG("Enter\n");
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_VINCE)
-	if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_VINCE) {
-        flashlight_ctrl = NULL;
-        flashlight_brightness_value = 0;
-    }
+	flashlight_ctrl = NULL;
+	flashlight_brightness_value = 0;
 #endif
 
 	rc = platform_driver_register(&msm_flash_platform_driver);

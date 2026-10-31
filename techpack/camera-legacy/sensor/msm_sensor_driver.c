@@ -17,9 +17,6 @@
 #include "camera.h"
 #include "msm_cci.h"
 #include "msm_camera_dt_util.h"
-#if IS_ENABLED(CONFIG_MACH_XIAOMI_MSM8953)
-#include <xiaomi-msm8953/mach.h>
-#endif
 
 /* Logging macro */
 #undef CDBG
@@ -975,7 +972,6 @@ int32_t legacy_msm_sensor_driver_probe(void *setting,
 	}
 
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_ROSY)
-	if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_ROSY) {
         if (!strcmp(slave_info->sensor_name, "ovt_ov5675_i")) {
             if (sub_module_id != 6) {
                 pr_err("failed: sub_module_id %d, sensor is not %s", sub_module_id, slave_info->sensor_name);
@@ -1011,7 +1007,6 @@ int32_t legacy_msm_sensor_driver_probe(void *setting,
         // Membuat node sysfs fusion ID di /sys/kernel/ secara dinamis hanya di sasis Rosy
         rc = kobject_init_and_add(&kobj_back, &ktype_back, NULL, "camera_fusion_id_back");
         rc = kobject_init_and_add(&kobj_front, &ktype_front, NULL, "camera_fusion_id_front");
-    }
 #endif
 
 	/* Extract s_ctrl from camera id */
