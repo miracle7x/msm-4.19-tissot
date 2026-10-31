@@ -16,9 +16,6 @@
 #include <linux/msm-bus.h>
 #include <linux/pm_qos.h>
 #include <linux/dma-buf.h>
-#if IS_ENABLED(CONFIG_MACH_XIAOMI_MSM8953)
-#include <xiaomi-msm8953/mach.h>
-#endif
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_VINCE)
 #include <linux/delay.h>
 #endif
@@ -391,43 +388,40 @@ int mdss_dsi_panel_power_off(struct mdss_panel_data *pdata)
         pr_debug("reset disable: pinctrl not enabled\n");
 
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO)
-    if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_MIDO) {
-        if (panel_suspend_reset_flag == 2)
-            msleep(1);
-        else if (panel_suspend_reset_flag == 3)
-            msleep(4);
-    }
+    if (panel_suspend_reset_flag == 2)
+        msleep(1);
+    else if (panel_suspend_reset_flag == 3)
+        msleep(4);
 #endif
 
-
-    if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_TISSOT) {
-        if ((panel_suspend_power_flag != 3) && acc_vreg) {
-            ret = msm_mdss_enable_vreg(
-                ctrl_pdata->panel_power_data.vreg_config,
-                ctrl_pdata->panel_power_data.num_vreg, 0);
-            acc_vreg--;
-            if (ret)
-                pr_err("%s: failed to disable vregs for %s\n",
-                    __func__, __mdss_dsi_pm_name(DSI_PANEL_PM));
-        } else {
-            if (!acc_vreg) {
-                ret = msm_mdss_enable_vreg(
-                        ctrl_pdata->panel_power_data.vreg_config,
-                        ctrl_pdata->panel_power_data.num_vreg, 0);
-                acc_vreg--;
-                if (ret)
-                    pr_err("%s: failed to disable vregs for %s\n",
-                         __func__, __mdss_dsi_pm_name(DSI_PANEL_PM));
-            }
-        }
-    } else {
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)
+    if ((panel_suspend_power_flag != 3) && acc_vreg) {
         ret = msm_mdss_enable_vreg(
             ctrl_pdata->panel_power_data.vreg_config,
             ctrl_pdata->panel_power_data.num_vreg, 0);
+        acc_vreg--;
         if (ret)
             pr_err("%s: failed to disable vregs for %s\n",
                 __func__, __mdss_dsi_pm_name(DSI_PANEL_PM));
+    } else {
+        if (!acc_vreg) {
+            ret = msm_mdss_enable_vreg(
+                    ctrl_pdata->panel_power_data.vreg_config,
+                    ctrl_pdata->panel_power_data.num_vreg, 0);
+            acc_vreg--;
+            if (ret)
+                pr_err("%s: failed to disable vregs for %s\n",
+                     __func__, __mdss_dsi_pm_name(DSI_PANEL_PM));
+        }
     }
+#else
+    ret = msm_mdss_enable_vreg(
+        ctrl_pdata->panel_power_data.vreg_config,
+        ctrl_pdata->panel_power_data.num_vreg, 0);
+    if (ret)
+        pr_err("%s: failed to disable vregs for %s\n",
+            __func__, __mdss_dsi_pm_name(DSI_PANEL_PM));
+#endif
 
 end:
     return ret;
@@ -437,8 +431,6 @@ static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata)
 {
     int ret = 0;
     struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
-    int mach = xiaomi_msm8953_mach_get();
-    int is_tissot = (mach == XIAOMI_MSM8953_MACH_TISSOT);
 
     if (pdata == NULL) {
         pr_err("%s: Invalid input data\n", __func__);
@@ -448,28 +440,28 @@ static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata)
     ctrl_pdata = container_of(pdata, struct mdss_dsi_ctrl_pdata,
                 panel_data);
 
-    if (is_tissot) {
-        if (!acc_vreg) {
-            ret = msm_mdss_enable_vreg(
-                ctrl_pdata->panel_power_data.vreg_config,
-                ctrl_pdata->panel_power_data.num_vreg, 1);
-            acc_vreg++;
-            if (ret) {
-                pr_err("%s: failed to enable vregs for %s\n",
-                    __func__, __mdss_dsi_pm_name(DSI_PANEL_PM));
-                return ret;
-            }
-        }
-    } else {
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)
+    if (!acc_vreg) {
         ret = msm_mdss_enable_vreg(
             ctrl_pdata->panel_power_data.vreg_config,
             ctrl_pdata->panel_power_data.num_vreg, 1);
+        acc_vreg++;
         if (ret) {
             pr_err("%s: failed to enable vregs for %s\n",
                 __func__, __mdss_dsi_pm_name(DSI_PANEL_PM));
             return ret;
         }
     }
+#else
+    ret = msm_mdss_enable_vreg(
+        ctrl_pdata->panel_power_data.vreg_config,
+        ctrl_pdata->panel_power_data.num_vreg, 1);
+    if (ret) {
+        pr_err("%s: failed to enable vregs for %s\n",
+            __func__, __mdss_dsi_pm_name(DSI_PANEL_PM));
+        return ret;
+    }
+#endif
 
     /*
      * If continuous splash screen feature is enabled, then we need to
@@ -3276,29 +3268,25 @@ static struct device_node *mdss_dsi_find_panel_of_node(
 		pr_info("%s: cmdline:%s panel_name:%s\n",
 			__func__, panel_cfg, panel_name);
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_MIDO)
-		if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_MIDO) {
-			if (!strcmp(panel_name, "qcom,mdss_dsi_otm1911_fhd_video")) {
-				panel_suspend_reset_flag = 2;
-			} else if (!strcmp(panel_name, "qcom,mdss_dsi_ili9885_boe_fhd_video")) {
-				panel_suspend_reset_flag = 3;
-			}
+		if (!strcmp(panel_name, "qcom,mdss_dsi_otm1911_fhd_video")) {
+			panel_suspend_reset_flag = 2;
+		} else if (!strcmp(panel_name, "qcom,mdss_dsi_ili9885_boe_fhd_video")) {
+			panel_suspend_reset_flag = 3;
 		}
 #endif
 		if (!strcmp(panel_name, NONE_PANEL))
 			goto exit;
 
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)
-		if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_TISSOT) {
-			if (!strcmp(panel_name, "qcom,mdss_dsi_td4310_fhd_video")) {
-				panel_suspend_reset_flag = 1;
-				panel_suspend_power_flag = 1;
-			} else if (!strcmp(panel_name, "qcom,mdss_dsi_otm1911_fhd_video")) {
-				panel_suspend_reset_flag = 2;
-				panel_suspend_power_flag = 2;
-			} else if (!strcmp(panel_name, "qcom,mdss_dsi_ft8716_fhd_video")) {
-				panel_suspend_reset_flag = 3;
-				panel_suspend_power_flag = 3;
-			}
+		if (!strcmp(panel_name, "qcom,mdss_dsi_td4310_fhd_video")) {
+			panel_suspend_reset_flag = 1;
+			panel_suspend_power_flag = 1;
+		} else if (!strcmp(panel_name, "qcom,mdss_dsi_otm1911_fhd_video")) {
+			panel_suspend_reset_flag = 2;
+			panel_suspend_power_flag = 2;
+		} else if (!strcmp(panel_name, "qcom,mdss_dsi_ft8716_fhd_video")) {
+			panel_suspend_reset_flag = 3;
+			panel_suspend_power_flag = 3;
 		}
 #endif
 
@@ -3701,8 +3689,7 @@ static int mdss_dsi_ctrl_probe(struct platform_device *pdev)
 	}
 
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)
-	if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_TISSOT)
-        panel_data = &ctrl_pdata->panel_data;
+	panel_data = &ctrl_pdata->panel_data;
 #endif
 
 	rc = dsi_panel_device_register(pdev, dsi_pan_node, ctrl_pdata);
@@ -4798,11 +4785,7 @@ int dsi_panel_device_register(struct platform_device *ctrl_pdev,
     IS_ENABLED(CONFIG_MACH_XIAOMI_VINCE)  || \
 	IS_ENABLED(CONFIG_MACH_XIAOMI_SAKURA)  || \
 	IS_ENABLED(CONFIG_MACH_XIAOMI_DAISY)
-	else if ((xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_VINCE ||
-		xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_DAISY ||
-		xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_SAKURA ||
-		xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_MIDO) && 
-		 ctrl_pdata->status_mode == ESD_TE_NT35596) {
+	else if (ctrl_pdata->status_mode == ESD_TE_NT35596) {
 		ctrl_pdata->check_status = mdss_dsi_TE_NT35596_check;
 		init_te_irq(ctrl_pdata);
 	}

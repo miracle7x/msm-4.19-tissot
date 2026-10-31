@@ -17,9 +17,6 @@
 #include <linux/err.h>
 #include <linux/string.h>
 #include <linux/display_state.h>
-#if IS_ENABLED(CONFIG_MACH_XIAOMI_MSM8953)
-#include <xiaomi-msm8953/mach.h>
-#endif
 
 #include "mdss_dsi.h"
 #include "mdss_dba_utils.h"
@@ -391,9 +388,6 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
     struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
     struct mdss_panel_info *pinfo = NULL;
     int i, rc = 0;
-    
-    int mach = xiaomi_msm8953_mach_get();
-    int is_tissot = (mach == XIAOMI_MSM8953_MACH_TISSOT);
 
     if (pdata == NULL) {
         pr_err("%s: Invalid input data\n", __func__);
@@ -515,8 +509,8 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
             gpio_free(ctrl_pdata->disp_en_gpio);
         }
 
-        if ((is_tissot) && 
-            (panel_suspend_reset_flag == 2 || panel_suspend_reset_flag == 3)) {
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)
+        if (panel_suspend_reset_flag == 2 || panel_suspend_reset_flag == 3) {
             gpio_set_value((ctrl_pdata->rst_gpio), 1);
             mdelay(10);
             gpio_set_value((ctrl_pdata->rst_gpio), 0);
@@ -528,6 +522,9 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
         } else {
             gpio_set_value((ctrl_pdata->rst_gpio), 0);
         }
+#else
+        gpio_set_value((ctrl_pdata->rst_gpio), 0);
+#endif
 
         gpio_free(ctrl_pdata->rst_gpio);
         if (gpio_is_valid(ctrl_pdata->lcd_mode_sel_gpio)) {
@@ -1873,10 +1870,8 @@ static bool mdss_dsi_cmp_panel_reg_v2(struct mdss_dsi_ctrl_pdata *ctrl)
 	int group = 0;
 
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_YSL)
-	if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_YSL) {
-		if (!strncmp(ctrl->panel_data.panel_info.panel_name, "truly hx8394f", 13))
-			mdss_dsi_truly_set_sleep_out(ctrl);
-	}
+	if (!strncmp(ctrl->panel_data.panel_info.panel_name, "truly hx8394f", 13))
+		mdss_dsi_truly_set_sleep_out(ctrl);
 #endif
 
 	lenp = ctrl->status_valid_params ?: ctrl->status_cmds_rlen;
@@ -2138,12 +2133,7 @@ static void mdss_dsi_parse_esd_params(struct device_node *np,
 	IS_ENABLED(CONFIG_MACH_XIAOMI_SAKURA)  || \
 	IS_ENABLED(CONFIG_MACH_XIAOMI_DAISY)
 		} else if (!strcmp(string, "TE_check_NT35596")) {
-			if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_VINCE ||
-				xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_DAISY ||
-				xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_SAKURA ||
-                xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_MIDO) {
-				ctrl->status_mode = ESD_TE_NT35596;
-			}
+			ctrl->status_mode = ESD_TE_NT35596;
 #endif
 		} else if (!strcmp(string, "reg_read_nt35596")) {
 			ctrl->status_mode = ESD_REG_NT35596;

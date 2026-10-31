@@ -48,7 +48,6 @@
 #include "mdss_mdp.h"
 #include "mdss_sync.h"
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_MSM8953)
-#include <xiaomi-msm8953/mach.h>
 #endif
 
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER

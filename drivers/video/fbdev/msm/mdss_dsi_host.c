@@ -14,7 +14,6 @@
 #include <uapi/linux/sched/types.h>
 #include <linux/msm-bus.h>
 #if IS_ENABLED(CONFIG_MACH_XIAOMI_MSM8953)
-#include <xiaomi-msm8953/mach.h>
 #endif
 
 #include "mdss.h"
