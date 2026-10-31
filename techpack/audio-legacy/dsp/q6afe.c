@@ -22,9 +22,6 @@
 #include <ipc/apr_tal.h>
 #include "adsp_err.h"
 #include "q6afecal-hwdep.h"
-#if IS_ENABLED(CONFIG_MACH_XIAOMI_MSM8953)
-#include <xiaomi-msm8953/mach.h>
-#endif
 
 #define WAKELOCK_TIMEOUT	5000
 #define AFE_CLK_TOKEN	1024
@@ -840,8 +837,7 @@ static int32_t sp_make_afe_callback(uint32_t opcode, uint32_t *payload,
 		atomic_set(&this_afe.state, -1);
 	}
 
-#if IS_ENABLED(CONFIG_MACH_XIAOMI_MSM8953)
-	if (xiaomi_msm8953_mach_get() == XIAOMI_MSM8953_MACH_TISSOT) {
+#if IS_ENABLED(CONFIG_MACH_XIAOMI_TISSOT)
         if (param_hdr.param_id == AFE_PARAM_ID_DSM_CFG  ||
             param_hdr.param_id == AFE_PARAM_ID_DSM_INFO ||
             param_hdr.param_id == AFE_PARAM_ID_CALIB) {
@@ -865,7 +861,6 @@ static int32_t sp_make_afe_callback(uint32_t opcode, uint32_t *payload,
                 atomic_set(&this_afe.state, -1);
             }
         }
-    }
 #endif
 
 	return 0;

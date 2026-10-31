@@ -13,9 +13,6 @@
 #include "codecs/wsa881x-analog.h"
 #include <linux/regulator/consumer.h>
 #include <linux/regulator/driver.h>
-#if IS_ENABLED(CONFIG_MACH_XIAOMI_MSM8953)
-#include <xiaomi-msm8953/mach.h>
-#endif
 
 
 #define BTSCO_RATE_8KHZ 8000
